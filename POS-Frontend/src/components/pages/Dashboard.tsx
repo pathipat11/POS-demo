@@ -1,110 +1,197 @@
-import React from "react";
-import { Bar } from "react-chartjs-2";
+import React, { useEffect, useState } from "react";
+import { Line } from "react-chartjs-2";
 import {
   Chart as ChartJS,
   CategoryScale,
   LinearScale,
-  BarElement,
+  PointElement,
+  LineElement,
   Title,
   Tooltip,
   Legend,
 } from "chart.js";
 import "../../styles/page/POSDashboard.css";
+import { fetchSalesSummary } from "../../api/receipt/receiptApi";
 
-// Register chart components
-ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
+ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
 
-const Dashboard: React.FC = () => {
-  // ข้อมูลราคาสินค้า (สมมติราคาสินค้า)
-  const productPrices = {
-    tshirt: 250,  // ราคาของเสื้อยืด
-    jeans: 500,   // ราคาของกางเกงยีนส์
-    shoes: 800,   // ราคาของรองเท้าผ้าใบ
+interface TimeFrameData {
+  totalSales: number;
+  totalQuantity: number;
+  netSales: number;
+  totalProfit: number;
+  bestSeller: {
+    name: string;
+    quantity: number;
+    revenue: number;
   };
+  formattedDate: {
+    thai: string;
+    iso: string;
+  };
+}
 
-  // ข้อมูลการขายจำนวนสินค้าที่ขายไปในแต่ละวัน
-  const dailySales = [50, 80, 120, 150, 200, 230, 300];  // จำนวนสินค้าที่ขายในแต่ละวัน
-  const monthlySales = dailySales.reduce((sum, current) => sum + current, 0); // ยอดขายรวมในเดือนนี้
+interface DashboardData {
+  daily: TimeFrameData[];
+  weekly: TimeFrameData[];
+  monthly: TimeFrameData[];
+}
 
-  // ข้อมูลยอดขายรวมในแต่ละวัน
-  const dailyRevenue = dailySales.map((quantity) => quantity * productPrices.tshirt);  // สมมติว่าใช้ราคาของเสื้อยืด
-  const dailyRevenueToday = dailyRevenue[3]; // ยอดขายในวันนี้ (วันพฤหัสบดี)
-  const monthlyRevenue = dailyRevenue.reduce((sum, current) => sum + current, 0);  // ยอดขายรวมในเดือนนี้
+// ✅ ฟังก์ชัน format label ตาม filter
+function formatLabel(dateString: string, filter: "daily" | "weekly" | "monthly"): string {
+  const date = new Date(dateString);
+  if (filter === "daily") {
+    return date.toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" });
+  }
+  return date.toLocaleDateString("th-TH", { day: "numeric", month: "short" });
+}
 
+export default function SalesSummary() {
+  const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [filter, setFilter] = useState<"daily" | "weekly" | "monthly">("weekly");
+
+  useEffect(() => {
+    const getSummary = async () => {
+      try {
+        const res = await fetchSalesSummary();
+        if (res.success) {
+          setDashboardData(res.data);
+        } else {
+          setError("ไม่สามารถดึงข้อมูลได้");
+        }
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "เกิดข้อผิดพลาด");
+      } finally {
+        setLoading(false);
+      }
+    };
+    getSummary();
+  }, []);
+
+  if (loading) return <p>⏳ กำลังโหลดข้อมูล...</p>;
+  if (error) return <p className="error-text">❌ {error}</p>;
+  if (!dashboardData) return <p>ไม่พบข้อมูล</p>;
+
+  const selectedData = dashboardData[filter];
+
+  // ✅ รวมค่าทั้งหมด
+  const totalSales = selectedData.reduce((sum, d) => sum + d.totalSales, 0);
+  const totalQuantity = selectedData.reduce((sum, d) => sum + d.totalQuantity, 0);
+  const totalProfit = selectedData.reduce((sum, d) => sum + d.totalProfit, 0);
+  const netSales = selectedData.reduce((sum, d) => sum + d.netSales, 0);
+
+  // ✅ หา best seller (fallback เป็น "-")
+  const bestSeller = selectedData.reduce(
+    (best, d) => (d.bestSeller && d.bestSeller.quantity > best.quantity ? d.bestSeller : best),
+    { name: "-", quantity: 0, revenue: 0 }
+  );
+
+  // ✅ ทำข้อมูลสำหรับกราฟ
   const salesData = {
-    labels: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+    labels: selectedData.map((d) => formatLabel(d.formattedDate.iso, filter)),
     datasets: [
       {
-        label: "จำนวนสินค้าที่ขายไป",
-        data: dailySales,
-        backgroundColor: "#6c5ce7",  // สีของกราฟ
-        borderColor: "#4e44c2",      // สีขอบของกราฟ
-        borderWidth: 1,              // ความหนาของขอบ
+        label: "ยอดขาย (บาท)",
+        data: selectedData.map((d) => d.totalSales),
+        borderColor: "#6c5ce7",
+        backgroundColor: "rgba(108, 92, 231, 0.2)",
+        fill: true,
+        tension: 0.3,
+        pointBackgroundColor: "#00cec9",
+        pointRadius: 5,
+        pointHoverRadius: 7,
       },
     ],
   };
 
-  const salesOptions = {
+  const options = {
     responsive: true,
     plugins: {
-      legend: {
+      legend: { position: "top" as const },
+      title: {
         display: true,
-        position: "top" as "top",
+        text:
+          filter === "daily"
+            ? "ยอดขายรายชั่วโมงวันนี้"
+            : filter === "weekly"
+              ? "ยอดขายรายวันสัปดาห์นี้"
+              : "ยอดขายรายวันเดือนนี้",
+        font: { size: 18 },
+        color: "#2d3436",
+      },
+      tooltip: {
+        callbacks: {
+          label: (context: any) => {
+            const value = context.raw;
+            return `฿${value.toLocaleString()}`;
+          },
+        },
       },
     },
     scales: {
-      x: {
-        title: {
-          display: true,
-          text: "วันของสัปดาห์",
-        },
-      },
+      x: { type: "category" as const },
       y: {
-        title: {
-          display: true,
-          text: "จำนวนสินค้าที่ขาย (ชิ้น)",
+        type: "linear" as const,
+        beginAtZero: true,
+        ticks: {
+          callback: function (value: string | number) {
+            return typeof value === "number" ? `฿${value.toLocaleString()}` : value;
+          },
         },
       },
     },
   };
 
   return (
-    <div className="report-sale-container">
-      <header className="report-sale-header">
-        <h1 className="report-sale-title">รายงานยอดขาย</h1>
-      </header>
-      <main className="report-sale-main">
-        <section className="report-sale-overview">
-          <h2 className="report-sale-overview-title">ภาพรวมยอดขาย</h2>
-          <p className="report-sale-overview-text">จำนวนสินค้าที่ขายในวันนี้: 150 ชิ้น</p>
-          <p className="report-sale-overview-text">ยอดขายในวันนี้: ฿{dailyRevenueToday.toLocaleString()}</p>
-          <p className="report-sale-overview-text">จำนวนสินค้าขายรวมในเดือนนี้: {monthlySales} ชิ้น</p>
-          <p className="report-sale-overview-text">ยอดขายรวมในเดือนนี้: ฿{monthlyRevenue.toLocaleString()}</p>
+    <div className="display">
+      <div className="report-sale-container">
+        <header className="report-sale-header">
+          <h1 className="report-sale-title">📊 รายงานยอดขาย</h1>
+        </header>
+
+        <div className="filter-buttons">
+          <button className={filter === "daily" ? "active" : ""} onClick={() => setFilter("daily")}>
+            รายวัน
+          </button>
+          <button className={filter === "weekly" ? "active" : ""} onClick={() => setFilter("weekly")}>
+            รายสัปดาห์
+          </button>
+          <button className={filter === "monthly" ? "active" : ""} onClick={() => setFilter("monthly")}>
+            รายเดือน
+          </button>
+        </div>
+
+        {/* ✅ summary cards */}
+        <section className="report-sale-summary">
+          <div className="summary-card">
+            <h3>ยอดขายรวม</h3>
+            <p>฿{totalSales.toLocaleString()}</p>
+          </div>
+          <div className="summary-card">
+            <h3>จำนวนที่ขายได้</h3>
+            <p>{totalQuantity.toLocaleString()} ชิ้น</p>
+          </div>
+          <div className="summary-card profit">
+            <h3>กำไรรวม</h3>
+            <p>฿{totalProfit.toLocaleString()}</p>
+          </div>
+          <div className="summary-card">
+            <h3>สินค้าขายดี</h3>
+            <p>{bestSeller.name}</p>
+            <small>{bestSeller.quantity.toLocaleString()} ชิ้น</small>
+            <small className="revenue">฿{bestSeller.revenue.toLocaleString()}</small>
+          </div>
         </section>
-        <section className="report-sale-product-info">
-          <h2 className="report-sale-product-info-title">ข้อมูลสินค้าขายดี</h2>
-          <p className="report-sale-product-info-text">เสื้อยืด: ขายไปแล้ว 1,000 ชิ้น</p>
-          <p className="report-sale-product-info-text">กางเกงยีนส์: ขายไปแล้ว 500 ชิ้น</p>
-          <p className="report-sale-product-info-text">รองเท้าผ้าใบ: ขายไปแล้ว 350 คู่</p>
-        </section>
-        <section className="report-sale-revenue">
-          <h2 className="report-sale-revenue-title">ยอดขายในแต่ละวัน</h2>
-          <ul className="report-sale-revenue-list">
-            {dailyRevenue.map((revenue, index) => (
-              <li key={index} className="report-sale-revenue-item">
-                <span className="report-sale-revenue-day">{salesData.labels[index]}: </span>
-                <span className="report-sale-revenue-amount">{`ยอดขาย: ฿${revenue.toLocaleString()}`}</span>
-              </li>
-            ))}
-          </ul>
-        </section>
-        <section className="report-sale-chart">
-          <h2 className="report-sale-chart-title">การขายสินค้ารายวัน</h2>
-          <Bar className="report-sale-bar-chart" data={salesData} options={salesOptions} />
-        </section>
-      </main>
+
+        {/* ✅ chart */}
+        <main className="report-sale-main">
+          <section className="report-sale-chart">
+            <Line data={salesData} options={options} />
+          </section>
+        </main>
+      </div>
     </div>
   );
-};
-
-export default Dashboard;
+}

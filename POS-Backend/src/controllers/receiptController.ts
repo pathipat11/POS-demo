@@ -42,9 +42,9 @@ export const getReceiptSummary = async (req: Request, res: Response): Promise<vo
         const queryFields = 'employeeName items totalPrice amountPaid changeAmount timestamp';
 
         // Query receipts
-        const todayReceipts = await Receipt.find({ timestamp: { $gte: startOfToday } }).select(queryFields).lean();
-        const weekReceipts = await Receipt.find({ timestamp: { $gte: startOfWeek } }).select(queryFields).lean();
-        const monthReceipts = await Receipt.find({ timestamp: { $gte: startOfMonth } }).select(queryFields).lean();
+        const todayReceipts = await Receipt.find({ timestamp: { $gte: startOfToday } }).select(queryFields);
+        const weekReceipts = await Receipt.find({ timestamp: { $gte: startOfWeek } }).select(queryFields);
+        const monthReceipts = await Receipt.find({ timestamp: { $gte: startOfMonth } }).select(queryFields);
 
         // รวมยอด
         const calcSummary = (receipts: IReceipt[]) => ({

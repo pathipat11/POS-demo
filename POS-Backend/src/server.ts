@@ -16,8 +16,9 @@ import receiptRoutes from "./routes/receiptRoutes";
 import warehouseRoutes from "./routes/warehouseRoutes";
 import categoryRoutes from "./routes/categoryRoutes";
 import purchaseOrderRouter from "./routes/purchaseOrderRoutes";
-import cors from "cors";
+import dashboardRoutes from './routes/dashboardRoutes';
 
+import cors from "cors";
 
 dotenv.config();
 const app = express();
@@ -132,6 +133,7 @@ app.use("/api/receipts", receiptRoutes);
 app.use("/api/warehouses", warehouseRoutes);
 app.use("/api/stock", StockTransaction);
 app.use("/api/",purchaseOrderRouter);
+app.use('/api/dashboard', dashboardRoutes);
 
 
 // เริ่มเซิร์ฟเวอร์

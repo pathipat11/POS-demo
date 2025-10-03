@@ -1,102 +1,142 @@
-/* ตั้งค่าหลักสำหรับ container */
+/* ✅ Container หลัก */
 .report-sale-container {
-    width: 90%;
-      max-width: 1200px;
-      margin: 20px auto;
-      margin-left: 80px;
-      margin-top: 70px;
-      background-color: #ffffff;
-      padding: 20px;
-      border-radius: 8px;
-      box-shadow: 0 4px 40px rgba(0, 0, 0, 0.1);
-  /* สีพื้นหลังอ่อน */
-}
-.report-sale-title{
-      font-size: 24px;
-        text-align: center;
-        color: #6c5ce7;
-        margin-bottom: 20px;
+  width: 90%;
+  max-width: 1200px;
+  margin: 70px auto 20px auto;
+  background-color: #ffffff;
+  padding: 25px;
+  border-radius: 12px;
+  box-shadow: 0 4px 40px rgba(0, 0, 0, 0.08);
 }
 
-.report-sale-main {
+/* ✅ Title */
+.report-sale-title {
+  font-size: 26px;
+  font-weight: bold;
+  text-align: center;
+  color: #6c5ce7;
+  margin-bottom: 25px;
+}
+
+/* ✅ ส่วนสรุปยอดขาย */
+.report-sale-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
+  margin-bottom: 30px;
+}
+
+.summary-card {
+  background: #ffffff;
+  color: #2d3436;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  text-align: center;
+  transition: all 0.3s ease;
   display: flex;
   flex-direction: column;
+  gap: 8px;
+  border: 1px solid #e0e0e0;
 }
 
-/* ส่วนของภาพรวมยอดขาย */
-.report-sale-overview,
-.report-sale-product-info {
-  background-color: #ffffff;
-  padding: 15px;
-  border-radius: 6px;
-  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
-  margin-bottom: 15px;
+.summary-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 20px rgba(108, 92, 231, 0.15);
 }
 
-.report-sale-overview h2,
-.report-sale-product-info h2 {
+.summary-card h3 {
+  margin: 0 0 10px 0;
+  font-size: 1.1rem;
   color: #6c5ce7;
-  /* ใช้สีหลักสำหรับหัวข้อ */
-  font-size: 1.4rem;
-  /* ลดขนาดฟอนต์ */
-  margin-bottom: 10px;
+  font-weight: 600;
 }
 
-.report-sale-overview p,
-.report-sale-product-info p {
-  font-size: 1rem;
-  /* ลดขนาดฟอนต์ */
-  margin-bottom: 8px;
-  color: #333;
-  /* สีข้อความที่เข้ม */
+.summary-card p {
+  margin: 0;
+  font-size: 1.8rem;
+  font-weight: bold;
+  color: #2d3436;
 }
 
-/* ข้อมูลยอดขาย */
+.summary-card small {
+  display: block;
+  margin-top: 5px;
+  font-size: 0.9rem;
+  color: #636e72;
+}
+
+.summary-card small.positive {
+  color: #00b894;
+  font-weight: 600;
+}
+
+.summary-card small.negative {
+  color: #d63031;
+  font-weight: 600;
+}
+
+.summary-card small.quantity {
+  color: #636e72;
+  font-size: 0.9rem;
+  border-top: 1px solid #eee;
+  padding-top: 8px;
+  margin-top: 8px;
+}
+
+.summary-card small.revenue {
+  color: #0984e3;
+  font-weight: 600;
+}
+
+.summary-card.profit small.quantity {
+  color: #00b894;
+  font-weight: 600;
+}
+
+/* ✅ กราฟ */
 .report-sale-chart {
-  width: 80%;
-  /* กำหนดความกว้างของกราฟ */
-  height: 300px;
-  /* กำหนดความสูงของกราฟ */
-  margin: 0 auto;
-  /* จัดให้กราฟอยู่กลาง */
-}
-.report-sale-chart h2 {
-  color: #6c5ce7;
-  /* ใช้สีหลักสำหรับหัวข้อกราฟ */
-  font-size: 1.4rem;
-  /* ลดขนาดฟอนต์ */
-  margin-bottom: 15px;
-}
-/* ส่วนของกราฟ */
-.chart-container {
-  width: 100%;
-  max-width: 700px;
-  /* ลดขนาดกราฟ */
-  margin: 0 auto;
+  background: #ffffff;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+  border: 1px solid #e0e0e0;
 }
 
-/* สำหรับส่วนอื่นๆ */
-.report-sale-container p {
-  color: #555;
+/* ✅ Error */
+.error-text {
+  color: red;
+  font-weight: bold;
+  text-align: center;
+  margin-top: 20px;
 }
-.report-sale-revenue{
-    background-color: #ffffff;
-      padding: 15px;
-      border-radius: 6px;
-      box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
-      margin-bottom: 15px;
+
+
+/* ✅ ปุ่ม Filter */
+.filter-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  margin-bottom: 30px;
 }
-.report-sale-revenue-title{
+
+.filter-buttons button {
+  padding: 10px 20px;
+  border: 1px solid #6c5ce7;
+  border-radius: 8px;
+  background-color: transparent;
   color: #6c5ce7;
-  /* ใช้สีหลักสำหรับหัวข้อ */
-  font-size: 1.4rem;
-  /* ลดขนาดฟอนต์ */
-  margin-bottom: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
 }
-.report-sale-revenue-list{
-    font-size: 1rem;
-      /* ลดขนาดฟอนต์ */
-      margin-bottom: 8px;
-      color: #333;
-      /* สีข้อความที่เข้ม */
+
+.filter-buttons button:hover {
+  background-color: #f5f6fa;
+}
+
+.filter-buttons button.active {
+  background-color: #6c5ce7;
+  color: #ffffff;
+  box-shadow: 0 3px 8px rgba(108, 92, 231, 0.3);
 }
