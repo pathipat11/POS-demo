@@ -258,8 +258,6 @@ const AddProductModal: React.FC<AddProductModalProps> = ({ isOpen, onClose, onSu
                             {imagePreview && <img src={imagePreview} alt="preview" className="add-product-image-preview" />}
                         </div>
                     </div>
-
-                    {/* คอลัมน์สต็อก */}
                     {/* คอลัมน์สต็อก */}
                     <div className="add-product-form-column">
                         <h3>สต็อกสินค้า</h3>

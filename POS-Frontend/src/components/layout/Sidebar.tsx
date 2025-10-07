@@ -99,10 +99,6 @@ const Sidebar: React.FC<SidebarProps> = ({
               <FontAwesomeIcon icon={faFileInvoice} className="icon" />{" "}
               <span className="dropdown-text-sale">รายงานยอดขาย</span>
             </li>
-            <li onClick={() => handleMenuClick("/reports/stock", "รายงานสินค้าคงเหลือ")}>
-              <FontAwesomeIcon icon={faClipboardList} className="icon" />{" "}
-              <span className="dropdown-text-stock">รายงานสินค้าคงเหลือ</span>
-            </li>
             <li onClick={() => handleMenuClick("/reports/receipts", "ใบเสร็จ")}>
               <FontAwesomeIcon icon={faReceipt} className="icon" />{" "}
               <span className="dropdown-text-receipt">ใบเสร็จ</span>

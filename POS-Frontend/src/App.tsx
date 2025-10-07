@@ -14,7 +14,7 @@ import CreateOrder from "./components/purchaseOrder/CreatePurchaseOrderPage";
 import SupplierList from "./components/suppliers/SupplierList";
 import UserSettings from "./components/pages/UserSettings";
 import ReceiptPage from "./components/receipt/ReceiptPage";
-import ReceiptDetail from "./components/receipt/ReceiptDetail";
+import ReceiptDetail from "./components/receipt/ReceiptModal";
 import Search from "./components/product/BarcodeSearch";
 import SalePage from "./components/pages/Dashboard";
 import PaymentPage from "./components/payment/PaymentPage";

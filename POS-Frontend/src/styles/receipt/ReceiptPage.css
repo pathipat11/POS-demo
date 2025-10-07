@@ -1,20 +1,35 @@
 /* ตัว Container หลัก */
 .receipt-container {
-    max-width: 900px;
-        margin: 20px auto;
-        margin-top: 70px;
-        padding: 20px;
-        background: #fff;
-        border-radius: 8px;
-        box-shadow: 0 4px 40px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    padding: 20px;
+    background: #f9fafb;
+    box-sizing: border-box;
+}
+
+.receipt-header-wrapper {
+    position: sticky;
+    margin-top: 20px;
+    background: #fff;
+    z-index: 20;
+    padding: 16px 20px;
+    border-bottom: 1px solid #e5e7eb;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
 }
 
 /* ชื่อหัวข้อ */
-.receipt-title {
+.receipt-header {
     font-size: 24px;
-    text-align: center;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
     color: #6c5ce7;
-    margin-bottom: 20px;
 }
 
 /* ข้อความขณะโหลดข้อมูล */
@@ -32,31 +47,6 @@
     margin-top: 20px;
 }
 
-/* ตารางใบเสร็จ */
-.receipt-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 20px;
-    background-color: white;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-/* หัวตาราง */
-.receipt-table th {
-    border: 1px solid #ddd;
-    padding: 10px;
-    text-align: center;
-    background: #6c5ce7;
-    color: white;
-}
-
-/* ข้อมูลในตาราง */
-.receipt-table td {
-    border: 1px solid #ddd;
-    padding: 10px;
-    text-align: center;
-}
-
 /* แถวที่ไม่มีข้อมูล */
 .receipt-no-data {
     text-align: center;
@@ -64,6 +54,54 @@
     color: #888;
     padding: 20px;
     background-color: #f9f9f9;
+}
+
+/* ===========================
+   Table Wrapper
+=========================== */
+.receipt-table-wrapper {
+    flex: 1;
+    overflow-y: auto;
+    margin-top: 12px;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+/* ===========================
+   Table
+=========================== */
+.receipt-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+}
+
+.receipt-header-cell {
+    position: sticky;
+    top: 0;
+    background: #dddddd;
+    text-align: left;
+    padding: 12px;
+    font-weight: 600;
+    color: #374151;
+    border-bottom: 2px solid #e5e7eb;
+    z-index: 5;
+}
+
+.receipt-cell {
+    padding: 12px;
+    border-bottom: 1px solid #f1f5f9;
+    color: #374151;
+}
+
+.clickable-row {
+    transition: background 0.15s;
+    cursor: pointer;
+}
+
+.clickable-row:hover {
+    background: #f9fafb;
 }
 
 /* ลิงค์ "ดูรายละเอียด" */
@@ -75,21 +113,4 @@
 
 .view-detail:hover {
     text-decoration: underline;
-}
-
-/* สไตล์สำหรับแถว */
-.receipt-table tr:hover {
-    background-color: #f1f1f1;
-}
-
-/* สำหรับการจัดการหากไม่มีข้อมูล */
-.receipt-table td,
-.receipt-table th {
-    text-align: center;
-}
-
-/* เพิ่มความสวยงามให้กับช่องข้อมูล */
-.receipt-table td {
-    font-size: 1rem;
-    color: #333;
 }

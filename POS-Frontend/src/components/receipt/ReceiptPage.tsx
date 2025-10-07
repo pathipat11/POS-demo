@@ -1,49 +1,35 @@
 import { useEffect, useState } from "react";
 import { fetchReceipts } from "../../api/receipt/receiptApi";
 import "../../styles/receipt/ReceiptPage.css";
+import Pagination from "../stock/component/Pagination";
+import ReceiptTable from "./ReceiptTable";
+import ReceiptModal from "./ReceiptModal";
+import { Receipt } from "../../types/receipt";
 
-interface Item {
-  barcode: string;
-  name: string;
-  price: number;
-  quantity: number;
-  subtotal: number;
-  _id: string;
-}
-
-interface Receipt {
-  _id: string;
-  paymentId: string;
-  employeeName: string;
-  items: Item[];
-  totalPrice: number;
-  paymentMethod: string;
-  amountPaid: number;
-  changeAmount: number;
-  timestamp: string;
-}
 
 export default function ReceiptPage() {
   const [receipts, setReceipts] = useState<Receipt[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState<string>("");
+  const [selectedReceipt, setSelectedReceipt] = useState<Receipt | null>(null);
+
+  // Pagination
+  const [itemsPerPage, setItemsPerPage] = useState<number>(10);
+  const [currentPage, setCurrentPage] = useState<number>(1);
 
   useEffect(() => {
     const getReceipts = async () => {
       try {
         const response = await fetchReceipts();
-
-        // รองรับทั้งกรณี response = [] และ response = { success, data }
         const data: Receipt[] = Array.isArray(response)
           ? response
           : response?.data || [];
 
         if (data.length > 0) {
-          // เรียงจากใหม่ -> เก่า
           const sortedReceipts = data.sort(
             (a, b) =>
-              new Date(b.timestamp).getTime() -
-              new Date(a.timestamp).getTime()
+              new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
           );
           setReceipts(sortedReceipts);
         } else {
@@ -73,55 +59,91 @@ export default function ReceiptPage() {
       .replace("น.", "")
       .trim() + " น.";
 
+  // 🔍 Filter
+  const filteredReceipts = receipts.filter(
+    (r) =>
+      r.employeeName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      r.paymentMethod.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      r.items.some((i) =>
+        i.name.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+  );
+
+  // 📄 Pagination
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const paginatedReceipts = filteredReceipts.slice(
+    startIndex,
+    startIndex + itemsPerPage
+  );
+  const totalPages = Math.ceil(filteredReceipts.length / itemsPerPage);
+
   return (
     <div className="display">
       <div className="receipt-container">
-        <h1 className="receipt-title">🧾 รายการใบเสร็จ</h1>
+        <div className="receipt-header-wrapper">
+          <h1 className="receipt-header">🧾 รายการใบเสร็จ</h1>
 
-        {loading && <p className="receipt-loading">กำลังโหลดข้อมูล...</p>}
-        {error && <p className="receipt-error">{error}</p>}
+          {loading && <p className="receipt-loading">กำลังโหลดข้อมูล...</p>}
+          {error && <p className="receipt-error">{error}</p>}
 
+          {/* 🔍 Search + Pagination Controls */}
+          <div className="stock-controls">
+            <div className="search-container">
+              <input
+                type="text"
+                placeholder="🔍 ค้นหาสินค้า / พนักงาน / วิธีชำระเงิน..."
+                className="search-input"
+                value={searchQuery}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  setCurrentPage(1);
+                }}
+              />
+            </div>
+            <div className="items-per-page">
+              <label>แสดง: </label>
+              <select
+                value={itemsPerPage}
+                onChange={(e) => {
+                  setItemsPerPage(Number(e.target.value));
+                  setCurrentPage(1);
+                }}
+              >
+                <option value={10}>10</option>
+                <option value={20}>20</option>
+                <option value={30}>30</option>
+              </select>
+              <span> รายการต่อหน้า</span>
+            </div>
+          </div>
+        </div>
+
+        {/* ✅ ตารางใบเสร็จ */}
         {!loading && !error && (
-          <table className="receipt-table">
-            <thead>
-              <tr>
-                <th>ลำดับ</th>
-                <th>วันที่</th>
-                <th>พนักงาน</th>
-                <th>ยอดรวม</th>
-                <th>วิธีการชำระเงิน</th>
-                <th>ดูรายละเอียด</th>
-              </tr>
-            </thead>
-            <tbody>
-              {receipts.length > 0 ? (
-                receipts.map((receipt, index) => (
-                  <tr key={receipt._id}>
-                    <td>{index + 1}</td>
-                    <td>{formatThaiDateTime(receipt.timestamp)}</td>
-                    <td>{receipt.employeeName}</td>
-                    <td>{receipt.totalPrice.toLocaleString()} บาท</td>
-                    <td>{receipt.paymentMethod}</td>
-                    <td>
-                      <a
-                        href={`/receipts/paymentId/${receipt.paymentId}`}
-                        className="view-detail"
-                      >
-                        🔍 ดูรายละเอียด
-                      </a>
-                    </td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan={6} className="receipt-no-data">
-                    ไม่พบข้อมูลใบเสร็จ
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+          <div className="receipt-table-wrapper">
+            <ReceiptTable
+              receipts={paginatedReceipts}
+              formatThaiDateTime={formatThaiDateTime}
+              startIndex={startIndex}
+              onRowClick={(receipt) => setSelectedReceipt(receipt)} // ✅ คลิกแถวเพื่อเปิด modal
+            />
+          </div>
         )}
+
+        {/* ✅ Modal แสดงใบเสร็จ */}
+        {selectedReceipt && (
+          <ReceiptModal
+            receipt={selectedReceipt}
+            onClose={() => setSelectedReceipt(null)}
+          />
+        )}
+
+        {/* ✅ Pagination */}
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          setCurrentPage={setCurrentPage}
+        />
       </div>
     </div>
   );

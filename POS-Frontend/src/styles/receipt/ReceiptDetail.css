@@ -1,91 +1,163 @@
-.receipt-detail-container {
-    margin-top: 50px;
+.receipt-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.45);
     display: flex;
-    flex-direction: column;
     align-items: center;
-    min-height: 100vh;
+    justify-content: center;
+    z-index: 2000;
+}
+
+.receipt-modal-content {
     background: #fff;
+    border-radius: 10px;
     padding: 20px;
+    width: 340px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.25);
+    animation: fadeIn 0.2s ease-in-out;
 }
 
-.receipt-detail-paper {
-    background: white;
-    padding: 10px;
+.receipt-modal-paper {
     width: 80mm;
-    /* ขนาดกระดาษใบเสร็จมาตรฐาน */
-    text-align: left;
-    font-family: "Courier New", Courier, monospace;
+    background: #fff;
+    font-family: "Courier New", monospace;
     font-size: 12px;
-    border: none;
+    color: #000;
+    line-height: 1.4;
+    border: 1px solid #ccc;
+    padding: 10px;
 }
 
-.receipt-detail-title {
+.receipt-modal-header {
     text-align: center;
-    font-size: 14px;
-    font-weight: bold;
 }
 
-.receipt-detail-table {
+.receipt-store-name {
+    font-weight: bold;
+    font-size: 14px;
+}
+
+.receipt-store-branch,
+.receipt-store-contact {
+    font-size: 11px;
+    margin: 2px 0;
+}
+
+.receipt-separator {
+    border: none;
+    border-top: 1px dashed #333;
+    margin: 6px 0;
+}
+
+.receipt-items-table {
     width: 100%;
     border-collapse: collapse;
-    margin-top: 10px;
 }
 
-.receipt-detail-table th,
-.receipt-detail-table td {
-    padding: 5px;
+.receipt-items-table th,
+.receipt-items-table td {
+    font-size: 12px;
+    padding: 3px 0;
     text-align: left;
-    font-size: 12px;
 }
 
-.receipt-detail-table th {
-    font-weight: bold;
+.receipt-items-table th {
+    border-bottom: 1px dashed #333;
 }
 
-.receipt-detail-thankyou {
+.receipt-summary {
+    border-top: 1px dashed #333;
+    margin-top: 8px;
+    padding-top: 4px;
+}
+
+.receipt-summary p {
+    display: flex;
+    justify-content: space-between;
+    margin: 2px 0;
+}
+
+.receipt-footer {
     text-align: center;
-    font-size: 12px;
+    border-top: 1px dashed #333;
+    padding-top: 6px;
     font-weight: bold;
-    margin-top: 10px;
 }
 
-.receipt-detail-print-button {
-    margin-top: 10px;
-    padding: 8px;
-    font-size: 14px;
-    background-color: #007bff;
-    color: white;
-    border: 1px solid #aaa;
+.receipt-modal-actions {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 12px;
+}
+
+.receipt-btn-print,
+.receipt-btn-close {
+    border: none;
+    padding: 8px 14px;
+    border-radius: 5px;
     cursor: pointer;
-    border-radius: 3px;
+    font-size: 13px;
+    font-weight: 500;
 }
 
-.receipt-detail-print-button:hover {
-    background-color: #0056b3;
+.receipt-btn-print {
+    background: #1976d2;
+    color: white;
 }
 
-/* 🖨️ ตั้งค่าการพิมพ์ */
+.receipt-btn-print:hover {
+    background: #115293;
+}
+
+.receipt-btn-close {
+    background: #d32f2f;
+    color: white;
+}
+
+.receipt-btn-close:hover {
+    background: #9a0007;
+}
+
 @media print {
     body * {
         visibility: hidden;
     }
 
-    .receipt-detail-paper,
-    .receipt-detail-paper * {
+    .receipt-modal-paper,
+    .receipt-modal-paper * {
         visibility: visible;
     }
 
-    .receipt-detail-paper {
+    .receipt-modal-paper {
         position: absolute;
         left: 0;
         top: 0;
         width: 80mm;
-        box-shadow: none;
         border: none;
-        padding: 10px;
+        padding: 5px;
     }
 
-    .receipt-detail-print-button {
+    .receipt-modal-actions {
         display: none;
+    }
+
+    @page {
+        size: 80mm auto;
+        margin: 0;
+    }
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
     }
 }

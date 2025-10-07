@@ -9,6 +9,7 @@ export const createPayment = async (paymentData: {
     paymentMethod: "เงินสด" | "โอนเงิน" | "บัตรเครดิต" | "QR Code";
     amountReceived: number;
     amount: number;
+    change: number; // ✅ เพิ่มบรรทัดนี้
     items: Array<{
         barcode: string;
         name: string;
@@ -18,11 +19,9 @@ export const createPayment = async (paymentData: {
     }>;
 }) => {
     try {
-        // ส่งข้อมูลการชำระเงินและรายการสินค้าทั้งหมดไปที่ backend
         const response = await axios.post(`${API_BASE_URL}/payment/create`, paymentData);
 
         if (response.data.success) {
-            // เมื่อการชำระเงินและการสร้างใบเสร็จสำเร็จ ให้ส่งข้อมูลใบเสร็จกลับ
             return response.data;
         } else {
             return { success: false, message: "เกิดข้อผิดพลาดในการสร้างรายการชำระเงินและใบเสร็จ" };
@@ -32,6 +31,7 @@ export const createPayment = async (paymentData: {
         return { success: false, message: "เกิดข้อผิดพลาดในการสร้างรายการชำระเงินและใบเสร็จ" };
     }
 };
+
 
 // ดึงข้อมูลการชำระเงินของออเดอร์
 export const getPaymentByOrderId = async (orderId: string) => {

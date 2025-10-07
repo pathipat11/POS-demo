@@ -56,10 +56,10 @@ const StockTable: React.FC<StockTableProps> = ({
                                 </td>
                                 {/* ✅ แสดงราคาจาก Stock */}
                                 <td className="stock-cell">
-                                    {item.costPrice ? `${item.costPrice.toLocaleString()} ฿` : "-"}
+                                    {item.costPrice ? `${item.costPrice.toLocaleString()} บาท` : "-"}
                                 </td>
                                 <td className="stock-cell">
-                                    {item.salePrice ? `${item.salePrice.toLocaleString()} ฿` : "-"}
+                                    {item.salePrice ? `${item.salePrice.toLocaleString()} บาท` : "-"}
                                 </td>
                                 <td className="stock-cell">{item.quantity}</td>
                                 <td className="stock-cell">

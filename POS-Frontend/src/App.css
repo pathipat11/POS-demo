@@ -52,26 +52,24 @@ body {
   right: 20px;
 }
 
-/* เมื่อ sidebar ปิดอยู่ ให้ cart มีขนาด 400px */
-.app-container.sidebar-closed .cart.show-cart {
-  width: 450px;
-  top: 30px;
-  transition: width 0.3s ease-in-out, margin-left 0.3s ease-in-out;
-}
-
-/* เมื่อ sidebar เปิดอยู่ ให้ cart มีขนาด 0px */
-.app-container.sidebar-open .cart.show-cart {
-  width: 350px;
-  transition: width 0.3s ease-in-out, margin-left 0.3s ease-in-out;
-}
 
 .product-list-wrapper {
   transition: margin-left 0.3s ease-in-out;
 }
 
+.app-container.sidebar-closed .search-wrapper {
+  margin-right: 350px;
+  transition: width 0.3s ease-in-out, margin-left 0.3s ease-in-out;
+}
+
+.app-container.sidebar-open .product-content-area {
+  margin-left: 65px;
+  transition: width 0.3s ease-in-out, margin-left 0.3s ease-in-out;
+}
+
 /* เมื่อ sidebar ปิด */
-.app-container.sidebar-closed .product-list-wrapper {
-  margin-left: -480px;
+.app-container.sidebar-closed .product-container {
+  margin-left: 80px;
   transition: width 0.3s ease-in-out, margin-left 0.3s ease-in-out;
 }
 
@@ -79,10 +77,12 @@ body {
   margin-left: 50px;
   transition: width 0.3s ease-in-out, margin-left 0.3s ease-in-out;
 }
+
 .app-container.sidebar-closed .stock-container {
   margin-left: 50px;
   transition: width 0.3s ease-in-out, margin-left 0.3s ease-in-out;
 }
+
 .app-container.sidebar-open .stock-transaction-container {
   margin-left: 50px;
   transition: width 0.3s ease-in-out, margin-left 0.3s ease-in-out;
@@ -99,6 +99,7 @@ body {
   transition: width 0.3s ease-in-out, margin-left 0.3s ease-in-out;
 
 }
+
 .app-container.sidebar-open .employee-container {
   margin-left: 50px;
   transition: width 0.3s ease-in-out, margin-left 0.3s ease-in-out;
@@ -108,6 +109,7 @@ body {
   margin-left: 50px;
   transition: width 0.3s ease-in-out, margin-left 0.3s ease-in-out;
 }
+
 .app-container.sidebar-open .expired-container {
   margin-left: 50px;
   transition: width 0.3s ease-in-out, margin-left 0.3s ease-in-out;
@@ -117,6 +119,7 @@ body {
   margin-left: 50px;
   transition: width 0.3s ease-in-out, margin-left 0.3s ease-in-out;
 }
+
 .app-container.sidebar-open .barcode-container {
   margin-left: 50px;
   transition: width 0.3s ease-in-out, margin-left 0.3s ease-in-out;
@@ -131,11 +134,43 @@ body {
   margin-left: 50px;
   transition: width 0.3s ease-in-out, margin-left 0.3s ease-in-out;
 }
+
 .app-container.sidebar-closed .po-container {
   margin-left: 50px;
   transition: width 0.3s ease-in-out, margin-left 0.3s ease-in-out;
 }
+
 .app-container.sidebar-open .po-container {
+  margin-left: 50px;
+  transition: width 0.3s ease-in-out, margin-left 0.3s ease-in-out;
+}
+
+.app-container.sidebar-closed .receipt-container {
+  margin-left: 50px;
+  transition: width 0.3s ease-in-out, margin-left 0.3s ease-in-out;
+}
+
+.app-container.sidebar-open .payment-container {
+  margin-left: 50px;
+  transition: width 0.3s ease-in-out, margin-left 0.3s ease-in-out;
+}
+
+.app-container.sidebar-closed .payment-container {
+  margin-left: 50px;
+  transition: width 0.3s ease-in-out, margin-left 0.3s ease-in-out;
+}
+
+.app-container.sidebar-open .report-sale-container {
+  margin-left: 50px;
+  transition: width 0.3s ease-in-out, margin-left 0.3s ease-in-out;
+}
+
+.app-container.sidebar-closed .report-sale-container {
+  margin-left: 50px;
+  transition: width 0.3s ease-in-out, margin-left 0.3s ease-in-out;
+}
+
+.app-container.sidebar-open .receipt-container {
   margin-left: 50px;
   transition: width 0.3s ease-in-out, margin-left 0.3s ease-in-out;
 }
@@ -144,6 +179,7 @@ body {
   margin-left: 50px;
   transition: width 0.3s ease-in-out, margin-left 0.3s ease-in-out;
 }
+
 .employee-dashboard {
   transition: margin-left 0.3s ease-in-out;
 }

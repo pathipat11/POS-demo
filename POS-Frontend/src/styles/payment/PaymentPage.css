@@ -1,75 +1,93 @@
 /* payment/PaymentPage.css */
 .payment-container {
-    max-width: 900px;
-    margin: 20px auto;
-    margin-top: 70px;
-    padding: 20px;
-    background: #fff;
-    border-radius: 8px;
-    box-shadow: 0 4px 40px rgba(0, 0, 0, 0.1);}
-
-.payment-title {
-    font-size: 24px;
-    text-align: center;
-    color: #6c5ce7;
-    margin-bottom: 20px;
+    display: flex;
+        flex-direction: column;
+        height: 100vh;
+        padding: 20px;
+        background: #f9fafb;
+        box-sizing: border-box;
 }
 
-.payment-loading,
+.payment-header-wrapper {
+    position: sticky;
+    margin-top: 20px;
+    background: #fff;
+    z-index: 20;
+    padding: 16px 20px;
+    border-bottom: 1px solid #e5e7eb;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
+}
+
+/* ชื่อหัวข้อ */
+.payment-header {
+    font-size: 24px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    color: #6c5ce7;
+}
+
 .payment-error {
     text-align: center;
     font-size: 1.2rem;
     color: #d9534f;
 }
 
-.payment-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 20px;
-}
-
-.payment-table th,
-.payment-table td {
-    border: 1px solid #ddd;
-    padding: 10px;
-    text-align: center;
-}
-
-.payment-table th {
-    background: #6c5ce7;
-    color: white;
-}
-
-.payment-table tbody tr:nth-child(even) {
-    background-color: #f9f9f9;
-}
-
-.payment-table tbody tr:hover {
-    background-color: #f1f1f1;
-}
-
-.payment-no-data {
-    text-align: center;
-    font-size: 1.2rem;
-    color: #888;
-    padding: 20px;
-}
-
-.payment-table td {
-    color: #333;
-}
-
-.payment-table td:last-child {
-    text-transform: capitalize;
-}
-
-.payment-error {
-    color: #e74c3c;
-    font-size: 1rem;
-}
-
 .payment-loading {
     text-align: center;
     font-size: 1.2rem;
     color: #9e39e0;
+}
+
+/* ===========================
+   Table Wrapper
+=========================== */
+.payment-table-wrapper {
+    flex: 1;
+    overflow-y: auto;
+    margin-top: 12px;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+/* ===========================
+   Table
+=========================== */
+.payment-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+}
+
+.payment-header-cell {
+    position: sticky;
+    top: 0;
+    background: #dddddd;
+    text-align: left;
+    padding: 12px;
+    font-weight: 600;
+    color: #374151;
+    border-bottom: 2px solid #e5e7eb;
+    z-index: 5;
+}
+
+.payment-cell {
+    padding: 12px;
+    border-bottom: 1px solid #f1f5f9;
+    color: #374151;
+}
+
+.clickable-row {
+    transition: background 0.15s;
+    cursor: pointer;
+}
+
+.clickable-row:hover {
+    background: #f9fafb;
 }
