@@ -39,11 +39,19 @@ const StockLotByProduct: React.FC<Props> = ({
 
     // ✅ รวม remainingQty ของแต่ละ product
     const productGroups = normalizedStocks.map((p: any) => {
-        const relatedLots = lotsArray.filter((lot: any) => lot.barcode === p.barcode);
+        // ✅ เอาเฉพาะล็อตที่ผ่าน QC หรือผ่านบางส่วนเท่านั้น
+        const relatedLots = lotsArray.filter(
+            (lot: any) =>
+                lot.barcode === p.barcode &&
+                (lot.qcStatus === "ผ่าน" || lot.qcStatus === "ผ่านบางส่วน")
+        );
+
+        // ✅ รวมจำนวนคงเหลือจากล็อตที่ผ่าน QC แล้วเท่านั้น
         const totalRemainingQty = relatedLots.reduce(
             (sum: number, lot: any) => sum + (Number(lot.remainingQty) || 0),
             0
         );
+
 
         return {
             ...p,

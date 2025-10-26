@@ -10,156 +10,122 @@
     backdrop-filter: blur(4px);
 }
 
-/* ===== Modal Container ===== */
+/* ===== Modal ===== */
 .stocklots-modal-content {
     background: #fff;
     border-radius: 14px;
     width: 100%;
-    max-width: 1200px;
+    max-width: 950px;
     max-height: 85vh;
+    overflow: hidden;
     box-shadow: 0 8px 25px rgba(0, 0, 0, 0.25);
+    padding: 18px 22px;
     display: flex;
     flex-direction: column;
     animation: slideUp 0.25s ease-out;
-    overflow: hidden;
-    /* กันไม่ให้ modal เลื่อนทั้งกล่อง */
 }
 
-@keyframes slideUp {
-    from {
-        transform: translateY(30px);
-        opacity: 0;
-    }
-
-    to {
-        transform: translateY(0);
-        opacity: 1;
-    }
+/* Header */
+.stocklots-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
 }
 
-/* ===== Title (Fixed Header) ===== */
-.stocklots-modal-title {
-    background: linear-gradient(90deg, #007bff, #00b4d8);
-    color: white;
-    text-align: center;
-    font-size: 1.25rem;
+.stocklots-modal-header h3 {
+    font-size: 1.2rem;
     font-weight: 600;
-    padding: 14px 20px;
-    border-bottom: 2px solid #e0e0e0;
-    flex-shrink: 0;
-    /* ห้ามเลื่อน */
 }
 
-/* ===== Table Wrapper ===== */
-.stocklot-table-wrapper {
-    flex: 1;
-    overflow-y: auto;
-    /* ✅ เลื่อนเฉพาะส่วนข้อมูลในตาราง */
-    background: #fafafa;
-    padding: 0 20px 10px;
+.stocklots-modal-header span {
+    color: #2b6cb0;
 }
 
 /* ===== Table ===== */
+.stocklot-table-wrapper {
+    overflow-y: auto;
+    overflow-x: hidden;
+    flex: 1;
+    border-radius: 10px;
+}
+
 .stocklot-modal-table {
     width: 100%;
     border-collapse: collapse;
-    font-size: 0.95rem;
-    table-layout: fixed;
+    text-align: center;
 }
 
-.stocklot-modal-table thead th {
+.stocklot-modal-table thead {
     position: sticky;
     top: 0;
-    /* ✅ หัวตารางไม่เลื่อน */
-    background: #f1f5fb;
-    color: #333;
-    font-weight: 600;
-    text-align: center;
-    padding: 10px;
+    background: #f9fafb;
+    z-index: 10;
     border-bottom: 2px solid #ddd;
-    z-index: 5;
 }
 
-.stocklot-modal-table tbody td {
-    text-align: center;
-    padding: 8px 10px;
+.stocklot-modal-table th,
+.stocklot-modal-table td {
+    padding: 10px 8px;
     border-bottom: 1px solid #eee;
 }
 
-.stocklot-modal-table tbody tr:hover {
-    background: #f9fbff;
+.stocklot-modal-table tr:hover {
+    background-color: #f5f5f5;
 }
 
 /* ===== Buttons ===== */
 .close-btn {
-    margin: 12px auto 18px;
-    padding: 8px 22px;
-    background: #555;
-    color: #fff;
+    background: #ef4444;
+    color: white;
     border: none;
     border-radius: 6px;
-    font-size: 0.95rem;
+    padding: 6px 12px;
     cursor: pointer;
-    transition: all 0.2s ease;
-}
-
-.close-btn:hover {
-    background: #333;
 }
 
 .danger-btn {
-    background: #dc3545;
-    color: white;
+    background: #dc2626;
+    color: #fff;
     border: none;
-    padding: 6px 14px;
     border-radius: 6px;
+    padding: 6px 10px;
     cursor: pointer;
     font-size: 0.9rem;
-    transition: 0.2s;
+    transition: all 0.2s;
 }
 
 .danger-btn:hover {
-    background: #b0212c;
+    background: #b91c1c;
 }
 
 .closed-label {
-    color: #777;
+    color: #888;
+    font-size: 0.9rem;
 }
 
-/* ===== QC Status ===== */
-.stocklots-qc-status {
-    padding: 4px 10px;
-    border-radius: 6px;
-    font-size: 0.85rem;
-    font-weight: 500;
-}
-
+/* ===== QC STATUS ===== */
 .qc-pass {
-    background: #d4edda;
-    color: #155724;
+    color: #16a34a;
+    font-weight: 600;
 }
 
 .qc-fail {
-    background: #f8d7da;
-    color: #721c24;
+    color: #dc2626;
+    font-weight: 600;
 }
 
 .qc-pending {
-    background: #fff3cd;
-    color: #856404;
+    color: #f59e0b;
+    font-weight: 600;
 }
 
 .qc-partial {
-    background: #d1ecf1;
-    color: #0c5460;
+    color: #0ea5e9;
+    font-weight: 600;
 }
 
-.qc-unknown {
-    background: #e2e3e5;
-    color: #383d41;
-}
-
-/* ===== Popup Overlay ===== */
+/* ===== Popup ===== */
 .stocklots-modal-popup-overlay {
     position: fixed;
     inset: 0;
@@ -170,95 +136,44 @@
     z-index: 10000;
 }
 
-/* ===== Popup Content ===== */
 .stocklots-modal-popup-content {
     background: #fff;
-    border-radius: 10px;
-    padding: 20px 25px;
-    width: 100%;
-    max-width: 400px;
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
-    animation: fadeIn 0.25s ease-in;
-}
-
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-        transform: scale(0.95);
-    }
-
-    to {
-        opacity: 1;
-        transform: scale(1);
-    }
-}
-
-.stocklots-modal-popup-content h3 {
-    text-align: center;
-    margin-bottom: 14px;
-    color: #333;
+    border-radius: 12px;
+    padding: 24px;
+    width: 420px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
 }
 
 .stocklots-modal-popup-select,
 .stocklots-modal-popup-textarea {
     width: 100%;
-    margin-top: 6px;
-    margin-bottom: 14px;
-    padding: 8px;
-    border-radius: 6px;
     border: 1px solid #ccc;
-    font-size: 0.95rem;
-}
-
-.stocklots-modal-popup-textarea {
-    min-height: 80px;
-    resize: none;
+    border-radius: 6px;
+    padding: 8px;
 }
 
 .stocklots-popup-actions {
     display: flex;
     justify-content: space-between;
-    gap: 10px;
+    margin-top: 12px;
 }
 
 .stocklots-confirm-btn {
-    background: #007bff;
+    background: #16a34a;
     color: white;
-    padding: 8px 18px;
     border: none;
     border-radius: 6px;
+    padding: 8px 14px;
     cursor: pointer;
-    transition: 0.2s;
-}
-
-.stocklots-confirm-btn:hover {
-    background: #0056b3;
 }
 
 .stocklots-cancel-btn {
-    background: #ccc;
-    color: #333;
-    padding: 8px 18px;
+    background: #9ca3af;
+    color: white;
     border: none;
     border-radius: 6px;
+    padding: 8px 14px;
     cursor: pointer;
-    transition: 0.2s;
-}
-
-.stocklots-cancel-btn:hover {
-    background: #aaa;
-}
-
-/* ===== Scrollbar ===== */
-.stocklot-table-wrapper::-webkit-scrollbar {
-    width: 8px;
-}
-
-.stocklot-table-wrapper::-webkit-scrollbar-thumb {
-    background: rgba(0, 0, 0, 0.2);
-    border-radius: 6px;
-}
-
-.stocklot-table-wrapper::-webkit-scrollbar-thumb:hover {
-    background: rgba(0, 0, 0, 0.35);
 }
