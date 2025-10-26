@@ -423,24 +423,45 @@ export const returnPurchaseOrder = async (req: Request, res: Response): Promise<
 
         let totalReturnedValue = 0;
         const returnHistory: any[] = [];
+        let skippedItems: string[] = [];
 
         for (const item of po.items as any[]) {
             const lot = lots.find((l) => l.batchNumber === item.batchNumber);
-            if (!lot || lot.qcStatus !== "ไม่ผ่าน") continue;
 
-            const returnQty = item.quantity;
-            const returnValue = returnQty * (item.costPrice || 0);
+            // ✅ ข้ามถ้าคืนไปแล้ว
+            if (item.isReturned || (item.returnedQuantity ?? 0) > 0) {
+                skippedItems.push(item.productName);
+                continue;
+            }
+
+            // ✅ คืนเฉพาะล็อตที่ไม่ผ่าน QC เท่านั้น
+            if (!lot || (lot.qcStatus !== "ไม่ผ่าน" && lot.qcStatus !== "ผ่านบางส่วน")) continue;
+
+            const failedQty =
+                lot.qcStatus === "ไม่ผ่าน"
+                    ? item.quantity
+                    : Math.min(lot.failedQuantity ?? 0, item.quantity);
+
+            if (failedQty <= 0) continue;
+
+            const returnValue = failedQty * (item.costPrice || 0);
             totalReturnedValue += returnValue;
 
+            // ✅ อัปเดตสถานะใน item
             item.isReturned = true;
-            item.returnedQuantity = returnQty;
+            item.returnedQuantity = failedQty;
             item.returnedValue = returnValue;
 
-            lot.returnStatus = "คืนสินค้าไม่ผ่าน QC";
-            lot.status = "รอคัดออก";
-            lot.isActive = false;
-            lot.isTemporary = true;
-            lot.remainingQty = 0;
+            // ✅ ปรับสถานะล็อต
+            lot.returnStatus = failedQty === item.quantity ? "คืนทั้งหมด" : "คืนบางส่วน";
+            lot.status = failedQty === item.quantity ? "ปิดล็อต" : "สินค้าพร้อมขาย";
+            lot.isActive = failedQty !== item.quantity;
+            lot.isTemporary = failedQty === item.quantity;
+            if (lot.qcStatus === "ผ่านบางส่วน") {
+                lot.failedQuantity = Math.max((lot.failedQuantity ?? 0) - failedQty, 0);
+            } else {
+                lot.remainingQty = 0;
+            }
             lot.closedBy = userId;
             lot.closedAt = new Date();
             await lot.save();
@@ -449,13 +470,14 @@ export const returnPurchaseOrder = async (req: Request, res: Response): Promise<
                 productId: item.productId,
                 productName: item.productName,
                 batchNumber: item.batchNumber,
-                returnedQuantity: returnQty,
+                returnedQuantity: failedQty,
                 returnedValue: returnValue,
                 returnedAt: new Date(),
                 processedBy: userId,
             });
         }
 
+        // ✅ อัปเดตยอดรวมหลังคืน
         const totalAmount = po.items.reduce((sum: number, i: any) => sum + (i.total || 0), 0);
         po.totalReturnedValue = totalReturnedValue;
         po.totalAmountAfterReturn = totalAmount - totalReturnedValue;
@@ -471,15 +493,17 @@ export const returnPurchaseOrder = async (req: Request, res: Response): Promise<
         // ✅ อัปเดตสถานะ PO อัตโนมัติหลังคืน
         await updatePurchaseOrderStatus(po._id);
 
+        // ✅ ตอบกลับผลลัพธ์
         res.status(200).json({
             success: true,
-            message: `✅ คืนสินค้าทั้งใบสำเร็จ (เฉพาะล็อตที่ QC ไม่ผ่าน รวม ${returnHistory.length} รายการ มูลค่า ${totalReturnedValue.toLocaleString()}฿)`,
+            message: `✅ คืนสินค้าทั้งใบสำเร็จ (เฉพาะล็อตที่ QC ไม่ผ่าน รวม ${returnHistory.length} รายการ มูลค่า ${totalReturnedValue.toLocaleString()}฿)${skippedItems.length > 0 ? `\n⚠️ ข้าม ${skippedItems.length} รายการที่เคยคืนแล้ว (${skippedItems.join(", ")})` : ""}`,
             data: {
                 poId: po._id,
                 status: po.status,
                 totalReturnedValue,
                 totalAmountAfterReturn: po.totalAmountAfterReturn,
                 returnHistory: po.returnHistory,
+                skippedItems,
             },
         });
     } catch (error) {
@@ -491,6 +515,7 @@ export const returnPurchaseOrder = async (req: Request, res: Response): Promise<
         });
     }
 };
+
 
 
 /* ========================================================
@@ -586,8 +611,12 @@ export const returnPurchaseItem = async (req: Request, res: Response): Promise<v
         lot.status = failedQty === item.quantity ? "ปิดล็อต" : "สินค้าพร้อมขาย";
         lot.isActive = failedQty !== item.quantity;
         lot.isTemporary = failedQty === item.quantity;
-        lot.remainingQty = Math.max((lot.remainingQty ?? lot.quantity) - failedQty, 0);
-        lot.closedBy = userId;
+        // ✅ ใหม่
+        if (qcRecord.status === "ผ่านบางส่วน") {
+            lot.failedQuantity = Math.max((lot.failedQuantity ?? 0) - failedQty, 0);
+        } else {
+            lot.remainingQty = 0; // ถ้าไม่ผ่านทั้งหมด
+        }        lot.closedBy = userId;
         lot.closedAt = new Date();
         await lot.save();
 

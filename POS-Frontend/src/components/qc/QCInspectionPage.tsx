@@ -2,11 +2,7 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { getPurchaseOrderById } from "../../api/purchaseOrder/purchaseOrderApi";
-import {
-    createQCRecord,
-    getQCByBatch,
-    updateQCStatus,
-} from "../../api/purchaseOrder/qcApi";
+import { createQCRecord, getQCByBatch, updateQCStatus } from "../../api/purchaseOrder/qcApi";
 import "../../styles/qc/QCInspectionPage.css";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faArrowLeft, faCheck } from "@fortawesome/free-solid-svg-icons";
@@ -61,17 +57,7 @@ const QCInspectionPage: React.FC = () => {
         loadData();
     }, [poId]);
 
-    // ✅ ตรวจสอบว่าแถวนี้พร้อมบันทึกไหม
-    const canSaveQC = (item: any, qc: any) => {
-        const total = item.quantity || 0;
-        if (!qc?.status) return false;
-        if (qc.status === "ผ่าน" && !qc.expiryDate) return false;
-        if (qc.status === "ผ่านบางส่วน" && (!qc.failedQuantity || qc.failedQuantity >= total))
-            return false;
-        return true;
-    };
-
-    // ✅ บันทึก QC แถวเดียว (เพิ่ม UX เช็ค field + animation upload)
+    // ✅ บันทึก QC แถวเดียว (อิงข้อมูลจริงจาก backend)
     const handleSubmitQC = async (item: any) => {
         const batchNumber = item.batchNumber;
         const qc = qcData[batchNumber] || {};
@@ -101,7 +87,6 @@ const QCInspectionPage: React.FC = () => {
         else if (failed === total) status = "ไม่ผ่าน";
         else if (failed > 0 && failed < total) status = "ผ่านบางส่วน";
 
-        // 🎬 เริ่มโหลดเฉพาะแถวนี้
         setRowLoading(batchNumber);
 
         try {
@@ -117,7 +102,6 @@ const QCInspectionPage: React.FC = () => {
             formData.append("remarks", qc.remarks || "");
             if (qc.expiryDate) formData.append("expiryDate", qc.expiryDate);
 
-            // ✅ แนบไฟล์
             (files[batchNumber] || []).forEach((file) => {
                 if (file instanceof File) formData.append("attachments", file);
             });
@@ -125,12 +109,38 @@ const QCInspectionPage: React.FC = () => {
             const res = await createQCRecord(formData, token);
 
             if (res.success) {
-                // 🟢 ใช้ข้อความจาก backend จริง
+                const qcRecord = res.data?.qcRecord;
+                const updatedLot = res.data?.updatedLot;
+
+                // ✅ แสดงข้อความจาก backend
                 setPopupMessage(res.message || `✅ บันทึกผล QC สำเร็จ (${item.productName})`);
                 setPopupSuccess(true);
                 setShowPopup(true);
+
+                // ✅ อัปเดต qcData ด้วยข้อมูลจาก backend จริง
+                if (qcRecord) {
+                    setQcData((prev) => ({
+                        ...prev,
+                        [batchNumber]: qcRecord,
+                    }));
+                }
+
+                // ✅ อัปเดต PO (เช่น status, expiryDate) โดยไม่ต้อง reload
+                if (updatedLot) {
+                    setPo((prev: any) => {
+                        const newItems = prev.items.map((it: any) =>
+                            it.batchNumber === batchNumber
+                                ? {
+                                    ...it,
+                                    qcStatus: updatedLot.qcStatus,
+                                    expiryDate: updatedLot.expiryDate,
+                                }
+                                : it
+                        );
+                        return { ...prev, items: newItems };
+                    });
+                }
             } else {
-                // 🔴 แสดงข้อความจริงจาก backend
                 setPopupMessage(res.message || "❌ ไม่สามารถบันทึก QC ได้");
                 setPopupSuccess(false);
                 setShowPopup(true);
@@ -143,26 +153,22 @@ const QCInspectionPage: React.FC = () => {
             setPopupSuccess(false);
             setShowPopup(true);
         } finally {
-            // ✅ ปิดโหลดเฉพาะแถวนี้
             setRowLoading(null);
         }
     };
 
-
-    // ✅ สรุป QC ทั้งใบ
+    // ✅ สรุป QC ทั้งใบ (เหมือนเดิม)
     const handleSubmitFinalQC = async () => {
         const token = localStorage.getItem("token") || "";
-        setSaving(true); // 🔒 disable ปุ่มทันที
-
+        setSaving(true);
         try {
             if (!po?.items?.length) return;
 
-            // ✅ ตรวจว่าสินค้าผ่านแต่ยังไม่ใส่วันหมดอายุ
             const missingExpiry: string[] = [];
             po.items.forEach((item: any) => {
                 const qc = qcData[item.batchNumber];
                 if (qc?.status === "ผ่าน" && (!qc?.expiryDate || qc.expiryDate === null)) {
-                    missingExpiry.push(item.productName || qc?.productId?.name || "ไม่ทราบชื่อสินค้า");
+                    missingExpiry.push(item.productName);
                 }
             });
 
@@ -176,29 +182,22 @@ const QCInspectionPage: React.FC = () => {
                 return;
             }
 
-            // ✅ เรียก backend เพื่อสรุป QC
             const res = await updateQCStatus(poId!, { qcStatus: "ผ่าน" }, token);
 
             if (res.success) {
-                // 🟢 ใช้ข้อความจาก backend จริง
                 setPopupMessage(res.message || "✅ สรุป QC สำเร็จ!");
                 setPopupSuccess(true);
                 setShowPopup(true);
-
-                // 🔒 ล็อกปุ่มไว้จนกว่าจะปิด popup
                 setPopupLocked(true);
 
-                // ✅ โหลดข้อมูลใหม่ (อัปเดตสถานะล่าสุด)
                 const updatedPO = await getPurchaseOrderById(poId!, token);
                 setPo(updatedPO.data);
 
-                // ✅ Redirect หลัง popup ปิด
                 setTimeout(() => {
                     setPopupLocked(false);
                     navigate("/purchase-orders");
                 }, 1500);
             } else {
-                // 🔴 ใช้ข้อความจาก backend จริง
                 setPopupMessage(res.message || "❌ ไม่สามารถสรุป QC ได้");
                 setPopupSuccess(false);
                 setShowPopup(true);
@@ -210,12 +209,8 @@ const QCInspectionPage: React.FC = () => {
             setPopupMessage(backendMessage);
             setPopupSuccess(false);
             setShowPopup(true);
-        } finally {
-            // ❌ อย่าปลดล็อกทันที ให้ปลดตอน popup ปิดแทน
-            // setSaving(false);
         }
     };
-
 
     if (loading) return <p className="qc-loading">⏳ กำลังโหลดข้อมูล...</p>;
     if (!po) return <p className="qc-error">ไม่พบข้อมูลใบสั่งซื้อ</p>;
@@ -246,7 +241,7 @@ const QCInspectionPage: React.FC = () => {
                     saving={saving}
                     isFinalized={isFinalized}
                     handleSubmitQC={handleSubmitQC}
-                    rowLoading={rowLoading} // ✅ เพิ่ม prop นี้
+                    rowLoading={rowLoading}
                 />
 
                 {/* ✅ ปุ่มสรุป QC */}
@@ -268,7 +263,6 @@ const QCInspectionPage: React.FC = () => {
                         )}
                     </button>
                 </div>
-
 
                 <GlobalPopup
                     message={popupMessage}

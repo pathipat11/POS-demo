@@ -5,7 +5,7 @@ import {
     returnPurchaseOrder,
 } from "../../api/purchaseOrder/purchaseOrderApi";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faVial, faPrint, faUndoAlt } from "@fortawesome/free-solid-svg-icons";
+import { faVial, faPrint, faUndoAlt, faUndo } from "@fortawesome/free-solid-svg-icons";
 import PurchaseOrderPrintModal from "./PurchaseOrderPrintModal";
 import "../../styles/purchaseOrder/PurchaseOrderActions.css";
 
@@ -54,7 +54,7 @@ const PurchaseOrderActions: React.FC<Props> = ({
         }
     };
 
-    const handleReturn = async () => {
+    const handleReturnAll = async () => {
         const token = localStorage.getItem("token") || "";
         const res = await returnPurchaseOrder(po._id, token);
         setPopup({ type: res.success ? "success" : "error", message: res.message });
@@ -68,6 +68,7 @@ const PurchaseOrderActions: React.FC<Props> = ({
         onActionComplete();
     };
 
+    // ✅ สรุปสถานะ QC และการคืน
     const qcStatusSummary = useMemo(() => {
         if (!po.stockLots || po.stockLots.length === 0)
             return { hasPass: false, hasFail: false, hasPending: false, hasReturnPending: false };
@@ -91,9 +92,20 @@ const PurchaseOrderActions: React.FC<Props> = ({
         return { hasPass, hasFail, hasPending, hasReturnPending };
     }, [po.stockLots]);
 
-    const showReturnButton =
+    // ✅ ปุ่มคืนบางส่วน (ของเดิม)
+    const showReturnButtonPartial =
         qcStatusSummary.hasReturnPending &&
-        !["ไม่ผ่าน QC - คืนสินค้าแล้ว", "ไม่ผ่าน QC - คืนสินค้าบางส่วนแล้ว"].includes(po.status);
+        !["ไม่ผ่าน QC - คืนสินค้าแล้ว", "ไม่ผ่าน QC - คืนสินค้าบางส่วนแล้ว"].includes(
+            po.status
+        );
+
+    // ✅ ปุ่มคืนทั้งใบ (ใหม่)
+    const showReturnAllButton =
+        (po.qcStatus === "ไม่ผ่าน" || po.qcStatus === "ผ่านบางส่วน") &&
+        !["ไม่ผ่าน QC - คืนสินค้าแล้ว", "ไม่ผ่าน QC - คืนสินค้าบางส่วนแล้ว"].includes(
+            po.status
+        ) &&
+        qcStatusSummary.hasFail; // ต้องมีของไม่ผ่านจึงคืนทั้งใบได้
 
     const showGoToQCButton =
         qcStatusSummary.hasPending ||
@@ -106,80 +118,96 @@ const PurchaseOrderActions: React.FC<Props> = ({
 
     return (
         <div className="po-actions">
-            {po.status === "รอดำเนินการ" && (
+            {/* 🚫 ถ้ายกเลิกแล้ว แสดงข้อความแทนทุกปุ่ม */}
+            {po.status === "ยกเลิก" ? (
+                <p className="po-cancelled-text">❌ ใบสั่งซื้อนี้ถูกยกเลิกแล้ว</p>
+            ) : (
                 <>
-                    <button
-                        className="po-confirm-button"
-                        onClick={handleConfirm}
-                        disabled={loading}
-                    >
-                        ยืนยันรับสินค้า
-                    </button>
-                    <button
-                        className="po-cancel-button"
-                        onClick={() =>
-                            openConfirmPopup("ยกเลิกใบสั่งซื้อนี้หรือไม่?", handleCancel)
-                        }
-                    >
-                        ยกเลิก
-                    </button>
-                </>
-            )}
+                    {/* ✅ ปุ่มรับสินค้า */}
+                    {po.status === "รอดำเนินการ" && (
+                        <>
+                            <button
+                                className="po-confirm-button"
+                                onClick={handleConfirm}
+                                disabled={loading}
+                            >
+                                ยืนยันรับสินค้า
+                            </button>
+                            <button
+                                className="po-cancel-button"
+                                onClick={() =>
+                                    openConfirmPopup("ยกเลิกใบสั่งซื้อนี้หรือไม่?", handleCancel)
+                                }
+                            >
+                                ยกเลิก
+                            </button>
+                        </>
+                    )}
 
-            {showReturnButton && (
-                <div
-                    className="tooltip-container"
-                    onMouseEnter={() => setShowTooltip(true)}
-                    onMouseLeave={() => setShowTooltip(false)}
-                >
-                    <button
-                        className="po-return-button"
-                        onClick={() =>
-                            openConfirmPopup("คืนสินค้า PO นี้หรือไม่?", handleReturn)
-                        }
-                    >
-                        <FontAwesomeIcon icon={faUndoAlt} /> คืนสินค้าที่ไม่ผ่าน QC
-                    </button>
-                    {showTooltip && (
-                        <div className="tooltip-text">
-                            💡 จะคืนเฉพาะสินค้าที่ “ยังไม่คืน” หรือ “รอคืนสินค้า” เท่านั้น
+                    {/* ✅ ปุ่มคืนสินค้าทั้งใบ */}
+                    {showReturnAllButton && (
+                        <div
+                            className="tooltip-container"
+                            onMouseEnter={() => setShowTooltip(true)}
+                            onMouseLeave={() => setShowTooltip(false)}
+                        >
+                            <button
+                                className="po-return-button"
+                                onClick={() =>
+                                    openConfirmPopup("คืนสินค้า PO นี้หรือไม่?", handleReturnAll)
+                                }
+                            >
+                                <FontAwesomeIcon icon={faUndoAlt} /> คืนสินค้าที่ไม่ผ่าน QC
+                            </button>
+                            {showTooltip && (
+                                <div className="tooltip-text">
+                                    💡 จะคืนเฉพาะสินค้าที่ “ยังไม่คืน” หรือ “รอคืนสินค้า” เท่านั้น
+                                </div>
+                            )}
                         </div>
                     )}
-                </div>
-            )}
 
-            {po.status !== "รอดำเนินการ" &&
-                showGoToQCButton &&
-                !allPassed && (
-                    <button
-                        className="qc-go-button"
-                        onClick={() => navigate(`/qc/${po._id}`)}
-                    >
-                        <FontAwesomeIcon icon={faVial} />{" "}
-                        {po.qcStatus === "ผ่านบางส่วน" || po.qcStatus === "ตรวจบางส่วน"
-                            ? "ดำเนินการตรวจ QC ต่อ"
-                            : "ไปตรวจ QC"}
-                    </button>
-                )}
+                    {/* ✅ ปุ่มไปตรวจ QC */}
+                    {po.status !== "รอดำเนินการ" &&
+                        showGoToQCButton &&
+                        !allPassed && (
+                            <button
+                                className="qc-go-button"
+                                onClick={() => navigate(`/qc/${po._id}`)}
+                            >
+                                <FontAwesomeIcon icon={faVial} />{" "}
+                                {po.qcStatus === "ผ่านบางส่วน" || po.qcStatus === "ตรวจบางส่วน"
+                                    ? "ดำเนินการตรวจ QC ต่อ"
+                                    : "ไปตรวจ QC"}
+                            </button>
+                        )}
 
-            {allPassed && (
-                <p className="qc-complete-text">✅ สินค้าทั้งหมดผ่านการตรวจ QC แล้ว</p>
-            )}
+                    {/* ✅ ผ่านทั้งหมดแล้ว */}
+                    {allPassed && (
+                        <p className="qc-complete-text">✅ สินค้าทั้งหมดผ่านการตรวจ QC แล้ว</p>
+                    )}
 
-            {canPrint && (
-                <button className="btn-print" onClick={() => setShowPrintModal(true)}>
-                    <FontAwesomeIcon icon={faPrint} /> พิมพ์ใบสั่งซื้อ
-                </button>
-            )}
+                    {/* ✅ ปุ่มพิมพ์ใบสั่งซื้อ */}
+                    {canPrint && (
+                        <button
+                            className="btn-print"
+                            onClick={() => setShowPrintModal(true)}
+                        >
+                            <FontAwesomeIcon icon={faPrint} /> พิมพ์ใบสั่งซื้อ
+                        </button>
+                    )}
 
-            {showPrintModal && (
-                <PurchaseOrderPrintModal
-                    po={po}
-                    onClose={() => setShowPrintModal(false)}
-                />
+                    {showPrintModal && (
+                        <PurchaseOrderPrintModal
+                            po={po}
+                            onClose={() => setShowPrintModal(false)}
+                        />
+                    )}
+                </>
             )}
         </div>
     );
+
 };
 
 export default PurchaseOrderActions;
