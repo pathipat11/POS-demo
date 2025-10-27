@@ -122,12 +122,11 @@ export const getReceiptByPaymentId = async (req: Request, res: Response): Promis
     }
 };
 
-/* ====================== GET /receipts/summary ====================== */
+/* =========================================================
+   📊 GET /receipts/summary — Public
+========================================================= */
 export const getReceiptSummary = async (req: Request, res: Response): Promise<void> => {
     try {
-        const authUserId = getAuthUserIdFromReq(req);
-        const ownerId = await getOwnerId(authUserId);
-
         const now = new Date();
         const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
         const startOfWeek = new Date(now);
@@ -137,9 +136,17 @@ export const getReceiptSummary = async (req: Request, res: Response): Promise<vo
 
         const selectFields = "employeeName items totalPrice amountPaid changeAmount timestamp";
 
-        const todayReceipts = await Receipt.find({ userId: ownerId, timestamp: { $gte: startOfToday } }).select(selectFields);
-        const weekReceipts = await Receipt.find({ userId: ownerId, timestamp: { $gte: startOfWeek } }).select(selectFields);
-        const monthReceipts = await Receipt.find({ userId: ownerId, timestamp: { $gte: startOfMonth } }).select(selectFields);
+        const todayReceipts = await Receipt.find({
+            timestamp: { $gte: startOfToday },
+        }).select(selectFields);
+
+        const weekReceipts = await Receipt.find({
+            timestamp: { $gte: startOfWeek },
+        }).select(selectFields);
+
+        const monthReceipts = await Receipt.find({
+            timestamp: { $gte: startOfMonth },
+        }).select(selectFields);
 
         const calcSummary = (receipts: IReceipt[]) => ({
             totalPrice: receipts.reduce((s, r) => s + Number(r.totalPrice || 0), 0),
@@ -149,7 +156,11 @@ export const getReceiptSummary = async (req: Request, res: Response): Promise<vo
             details: receipts.map((r) => ({
                 employeeName: r.employeeName,
                 timestamp: r.timestamp,
-                items: r.items.map((i) => ({ name: i.name, quantity: i.quantity, subtotal: i.subtotal })),
+                items: r.items.map((i) => ({
+                    name: i.name,
+                    quantity: i.quantity,
+                    subtotal: i.subtotal,
+                })),
             })),
         });
 
@@ -160,10 +171,11 @@ export const getReceiptSummary = async (req: Request, res: Response): Promise<vo
             thisMonth: calcSummary(monthReceipts),
         });
     } catch (error: any) {
-        const message = error?.message || "เกิดข้อผิดพลาดในการดึงข้อมูล summary";
-        const status = message === "Unauthorized" || message === "Invalid token" ? 401 : 500;
-        console.error("getReceiptSummary error:", message);
-        res.status(status).json({ success: false, message, error: { message } });
+        console.error("getReceiptSummary error:", error);
+        res.status(500).json({
+            success: false,
+            message: "เกิดข้อผิดพลาดในการดึงข้อมูล summary",
+        });
     }
 };
 
