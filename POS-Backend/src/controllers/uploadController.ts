@@ -2,13 +2,14 @@ import { Request, Response } from "express";
 import cloudinary from "../utils/cloudinary";
 import Product from "../models/Product";
 import Stock from "../models/Stock";
+import StockLot from "../models/StockLot";
 import User from "../models/User";
 import Supplier from "../models/Supplier";
 import Warehouse from "../models/Warehouse";
 import mongoose from "mongoose";
 import { verifyToken } from "../utils/auth";
 import dotenv from "dotenv";
-import { generateBatchNumber } from "../utils/generateBatch"; // ✅ ต้องสร้างไฟล์นี้เพิ่ม
+import { generateBatchNumber } from "../utils/generateBatch";
 
 dotenv.config();
 
@@ -50,10 +51,12 @@ export const addProductWithStock = async (req: Request, res: Response): Promise<
       notes,
       batchNumber,
       expiryDate,
-      isFromPO = false, // ✅ เพิ่ม flag สำหรับ PO
+      isFromPO = false,
     } = req.body;
 
-    // parse units
+    /* ==============================
+       🧩 Parse และ Normalize Data
+    ============================== */
     let unitArray: any[] = [];
     try {
       if (typeof units === "string") unitArray = JSON.parse(units);
@@ -68,12 +71,21 @@ export const addProductWithStock = async (req: Request, res: Response): Promise<
     const finalSalePrice =
       salePrice && salePrice !== "" ? Number(salePrice) : finalCostPrice * 1.2;
 
-    const finalBarcode =
-      typeof barcode === "string" && barcode.trim()
-        ? barcode.trim().replace(/^,+|,+$/g, "")
-        : `BC${Date.now()}${Math.floor(1000 + Math.random() * 9000)}`;
+    /* ==============================
+       🔄 จัดการ barcode อัตโนมัติ
+    ============================== */
+    let finalBarcode = "";
+    if (barcode && typeof barcode === "string" && barcode.trim()) {
+      finalBarcode = barcode.trim().replace(/^,+|,+$/g, "");
+    } else if (req.body.stockBarcode && req.body.stockBarcode.trim()) {
+      finalBarcode = req.body.stockBarcode.trim();
+    } else {
+      finalBarcode = `BC${Date.now()}${Math.floor(1000 + Math.random() * 9000)}`;
+    }
 
-    // ✅ supplier / warehouse ตรวจสอบก่อน
+    /* ==============================
+       🧾 ตรวจสอบ supplier / warehouse
+    ============================== */
     let supplierDoc = await Supplier.findById(supplierId);
     if (!supplierDoc) {
       supplierDoc = await Supplier.findOne({ companyName: "อื่นๆ" });
@@ -86,8 +98,6 @@ export const addProductWithStock = async (req: Request, res: Response): Promise<
       }
     }
 
-
-    // 🔧 แก้ส่วนนี้
     let warehouseDoc = null;
     if (mongoose.Types.ObjectId.isValid(location)) {
       warehouseDoc = await Warehouse.findById(location);
@@ -96,18 +106,19 @@ export const addProductWithStock = async (req: Request, res: Response): Promise<
     }
 
     if (!warehouseDoc) {
-       res.status(400).json({
+      res.status(400).json({
         success: false,
         message: `ไม่พบคลังสินค้าที่ชื่อหรือรหัส "${location}"`,
       });
       return;
     }
 
-    // ✅ ตรวจสอบว่าสินค้ามีอยู่แล้วหรือไม่
+    /* ==============================
+       🧩 ตรวจสอบว่ามีสินค้าอยู่แล้วหรือไม่
+    ============================== */
     let existingProduct = await Product.findOne({ barcode: finalBarcode });
     let newProduct = existingProduct;
 
-    // ✅ ถ้าไม่เคยมีสินค้านี้มาก่อน → สร้างใหม่
     if (!existingProduct) {
       if (!req.file) {
         res.status(400).json({ success: false, message: "No image uploaded" });
@@ -133,22 +144,31 @@ export const addProductWithStock = async (req: Request, res: Response): Promise<
         userId: decoded.userId,
         supplierId: supplierDoc._id,
       });
+
       await newProduct.save();
     }
-    // ✅ หลังจากรู้ product แล้ว ค่อยสร้าง batch number
+
+    /* ==============================
+       🔢 Generate Batch Number
+    ============================== */
     const finalBatchNumber =
       batchNumber && batchNumber.trim() !== ""
         ? batchNumber.trim()
         : await generateBatchNumber(
           warehouseDoc.code,
           supplierDoc.code,
-          newProduct!._id.toString() // ✅ ส่ง productId ด้วย
+          newProduct!._id.toString()
         );
-    // ✅ สร้างล็อตใหม่เสมอ (เพราะทุกการเพิ่มคือ batch ใหม่)
+
+    /* ==============================
+       📦 สร้าง Stock
+    ============================== */
+    const stockStatus = isFromPO ? "รอตรวจสอบ QC" : "สินค้าพร้อมขาย";
+
     const newStock = new Stock({
       productId: newProduct!._id,
       userId: decoded.userId,
-      quantity: finalQuantity,
+      totalQuantity: finalQuantity,
       supplierId: supplierDoc._id,
       supplierName: supplierDoc.companyName,
       location: warehouseDoc._id,
@@ -160,7 +180,7 @@ export const addProductWithStock = async (req: Request, res: Response): Promise<
       batchNumber: finalBatchNumber,
       expiryDate: expiryDate ? new Date(expiryDate) : null,
       notes: notes || "",
-      status: isFromPO ? "รอตรวจสอบ QC" : "สินค้าพร้อมขาย",
+      status: stockStatus,
       isTemporary: isFromPO,
       isActive: !isFromPO,
       lastRestocked: finalQuantity > 0 ? new Date() : undefined,
@@ -169,12 +189,54 @@ export const addProductWithStock = async (req: Request, res: Response): Promise<
 
     await newStock.save();
 
+    /* ==============================
+       🧾 เพิ่ม StockLot แรกอัตโนมัติ
+    ============================== */
+    const lotStatus = isFromPO ? "รอตรวจสอบ QC" : "สินค้าพร้อมขาย";
+    const lotQcStatus = isFromPO ? "รอตรวจสอบ" : "ผ่าน";
+
+    const newLot = new StockLot({
+      stockId: newStock._id,
+      productId: newProduct!._id,
+      supplierId: supplierDoc._id,
+      supplierName: supplierDoc.companyName,
+      userId: decoded.userId,
+      location: warehouseDoc._id,
+      batchNumber: finalBatchNumber,
+      expiryDate: expiryDate ? new Date(expiryDate) : null,
+      barcode: finalBarcode,
+      quantity: finalQuantity,
+      costPrice: finalCostPrice,
+      salePrice: finalSalePrice,
+      notes: notes || "",
+      status: lotStatus,
+      qcStatus: lotQcStatus,
+      returnStatus: "ยังไม่คืน",
+      isActive: true,
+      isTemporary: false,
+      isStocked: true,
+      lastRestocked: finalQuantity > 0 ? new Date() : undefined,
+    });
+
+    // ✅ ตั้งค่า remainingQty = จำนวนที่เพิ่ม
+    newLot.remainingQty = finalQuantity;
+
+    await newLot.save();
+
+
+    /* ==============================
+       ✅ ตอบกลับ
+    ============================== */
     res.status(201).json({
       success: true,
       message: existingProduct
         ? "เพิ่มล็อตสินค้าใหม่สำเร็จ ✅"
         : "สร้างสินค้าใหม่พร้อมล็อตแรกสำเร็จ ✅",
-      data: { product: newProduct, stock: newStock },
+      data: {
+        product: newProduct,
+        stock: newStock,
+        stockLot: newLot,
+      },
     });
   } catch (error) {
     console.error("❌ addProductWithStock Error:", error);
@@ -325,7 +387,9 @@ export const updateProductWithStock = async (req: Request, res: Response): Promi
       stock.costPrice = costPrice !== undefined ? Number(costPrice) : stock.costPrice;
       stock.salePrice =
         salePrice !== undefined ? Number(salePrice) : stock.salePrice || stock.costPrice * 1.2;
-      stock.quantity = quantity !== undefined ? Number(quantity) : stock.quantity;
+      if (quantity !== undefined) {
+        stock.totalQuantity = Number(quantity);
+      }
       stock.threshold = threshold !== undefined ? Number(threshold) : stock.threshold;
       stock.batchNumber = batchNumber || stock.batchNumber;
       stock.expiryDate = expiryDate ? new Date(expiryDate) : stock.expiryDate;

@@ -77,15 +77,28 @@ const QCTableRow: React.FC<QCTableRowProps> = ({
     const canSave = () => {
         if (isLocked || disabled || isFinalized || saving) return false;
         const total = item.quantity || 0;
+
+        // ❌ ห้ามบันทึกถ้ายังไม่เลือกสถานะ
         if (normalizedQC.status === "รอตรวจสอบ") return false;
-        if (normalizedQC.status === "ผ่าน" && !normalizedQC.expiryDate) return false;
+
+        // ❌ ห้ามบันทึกถ้า status เป็น "ผ่าน" หรือ "ผ่านบางส่วน" แต่ยังไม่ได้กรอกวันหมดอายุ
         if (
-            normalizedQC.status === "ผ่านบางส่วน" &&
-            (!normalizedQC.failedQuantity || normalizedQC.failedQuantity >= total)
+            (normalizedQC.status === "ผ่าน" || normalizedQC.status === "ผ่านบางส่วน") &&
+            !normalizedQC.expiryDate
         )
             return false;
+
+        // ❌ ห้ามบันทึกถ้าเป็น "ผ่านบางส่วน" แต่ไม่ระบุจำนวนที่ไม่ผ่านหรือใส่จำนวนเท่าทั้งหมด
+        if (
+            normalizedQC.status === "ผ่านบางส่วน" &&
+            (!normalizedQC.failedQuantity ||
+                normalizedQC.failedQuantity >= total)
+        )
+            return false;
+
         return true;
     };
+
 
     const rowClass =
         normalizedQC.status === "ผ่าน"
@@ -194,7 +207,8 @@ const QCTableRow: React.FC<QCTableRowProps> = ({
                         !canSave() ||
                         normalizedQC.status === "รอตรวจสอบ"
                     }
-                    onClick={() => {
+                    onClick={(e) => {
+                        e.preventDefault(); // ✅ กัน form refresh หรือ event bubble
                         if (!isLocked && rowLoading !== batchNumber) handleSubmitQC(item);
                     }}
                 >

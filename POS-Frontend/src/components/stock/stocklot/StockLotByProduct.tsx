@@ -34,30 +34,35 @@ const StockLotByProduct: React.FC<Props> = ({
         status: p.status || "",
         costPrice: p.costPrice || 0,
         salePrice: p.salePrice || 0,
+        lastRestocked: p.lastRestocked || p.updatedAt || p.createdAt || null,
         lots: [],
     }));
 
+    // ✅ เรียงใหม่ก่อนเก่าตามวันที่เติม stock ล่าสุด
+    normalizedStocks.sort((a: any, b: any) => {
+        const dateA = new Date(a.lastRestocked || 0).getTime();
+        const dateB = new Date(b.lastRestocked || 0).getTime();
+        return dateB - dateA; // 🔁 ใหม่ก่อน
+    });
+
     // ✅ รวม remainingQty ของแต่ละ product
     const productGroups = normalizedStocks.map((p: any) => {
-        // ✅ เอาเฉพาะล็อตที่ผ่าน QC หรือผ่านบางส่วนเท่านั้น
         const relatedLots = lotsArray.filter(
             (lot: any) =>
                 lot.barcode === p.barcode &&
                 (lot.qcStatus === "ผ่าน" || lot.qcStatus === "ผ่านบางส่วน")
         );
 
-        // ✅ รวมจำนวนคงเหลือจากล็อตที่ผ่าน QC แล้วเท่านั้น
         const totalRemainingQty = relatedLots.reduce(
             (sum: number, lot: any) => sum + (Number(lot.remainingQty) || 0),
             0
         );
 
-
         return {
             ...p,
             lotCount: relatedLots.length,
             lots: relatedLots,
-            totalRemainingQty, // ✅ รวมจาก remainingQty ของทุกล็อต
+            totalRemainingQty,
         };
     });
 
@@ -82,7 +87,7 @@ const StockLotByProduct: React.FC<Props> = ({
                         p.name,
                         p.barcode,
                         p.warehouse,
-                        `${p.totalRemainingQty} ชิ้น`, // ✅ ใช้ค่าจริงจาก remainingQty รวม
+                        `${p.totalRemainingQty} ชิ้น`,
                         p.lotCount,
                         <button className="table-btn" onClick={() => setSelectedProduct(p)}>
                             ดูล็อต

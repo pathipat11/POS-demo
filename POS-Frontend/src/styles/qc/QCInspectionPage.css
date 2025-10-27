@@ -296,6 +296,7 @@ body {
     background: #9ca3af;
     transform: none;
 }
+
 /* ===============================
    ✅ Finalize Section
 =================================*/
@@ -326,6 +327,7 @@ body {
     background: #9ca3af;
     cursor: not-allowed;
 }
+
 /* 🔒 แถวที่ตรวจแล้ว */
 .qc-row.locked {
     opacity: 0.6;
@@ -357,6 +359,7 @@ body {
     color: #64748b;
     animation: fadeInPage 0.6s ease-in-out;
 }
+
 .qc-spinner {
     display: inline-block;
     width: 14px;
@@ -374,6 +377,7 @@ body {
         transform: rotate(360deg);
     }
 }
+
 /* ===============================
    🎬 Animations
 =================================*/

@@ -55,42 +55,42 @@ const BarcodeUploader = () => {
 
   return (
     <div className="display">
-    <div className="barcode-uploader-container">
-      <h1 className="title">📸 อัปโหลดรูปภาพหรือกรอกบาร์โค้ดเพื่อค้นหาสินค้า</h1>
+      <div className="barcode-uploader-container">
+        <h1 className="title">📸 อัปโหลดรูปภาพหรือกรอกบาร์โค้ดเพื่อค้นหาสินค้า</h1>
 
-      {/* ส่วนอัปโหลดรูปภาพ */}
-      <input
-        type="file"
-        accept="image/*"
-        onChange={handleImageUpload}
-        className="file-input"
-      />
-
-      {/* ฟอร์มกรอกบาร์โค้ด */}
-      <form onSubmit={handleSubmit} className="barcode-form">
+        {/* ส่วนอัปโหลดรูปภาพ */}
         <input
-          type="text"
-          value={barcode}
-          onChange={(e) => setBarcode(e.target.value)}
-          placeholder="กรอกบาร์โค้ด..."
-          className="text-input"
+          type="file"
+          accept="image/*"
+          onChange={handleImageUpload}
+          className="file-input"
         />
-        <button type="submit" className="search-button">🔍 ค้นหาสินค้า</button>
-      </form>
 
-      {error && <p className="error-message">{error}</p>}
+        {/* ฟอร์มกรอกบาร์โค้ด */}
+        <form onSubmit={handleSubmit} className="barcode-form">
+          <input
+            type="text"
+            value={barcode}
+            onChange={(e) => setBarcode(e.target.value)}
+            placeholder="กรอกบาร์โค้ด..."
+            className="text-input"
+          />
+          <button type="submit" className="search-button">🔍 ค้นหาสินค้า</button>
+        </form>
 
-      {product && (
-        <div className="product-details">
-          <h2>📦 รายละเอียดสินค้า</h2>
-          <p><strong>รูปภาพสินค้า:</strong> {product.imageUrl}</p>
+        {error && <p className="error-message">{error}</p>}
 
-          <p><strong>ชื่อสินค้า:</strong> {product.name}</p>
-          <p><strong>ราคา:</strong> {product.price} บาท</p>
-          <p><strong>รายละเอียด:</strong> {product.description}</p>
-        </div>
-      )}
-    </div>
+        {product && (
+          <div className="product-details">
+            <h2>📦 รายละเอียดสินค้า</h2>
+            <p><strong>รูปภาพสินค้า:</strong> {product.imageUrl}</p>
+
+            <p><strong>ชื่อสินค้า:</strong> {product.name}</p>
+            <p><strong>ราคา:</strong> {product.price} บาท</p>
+            <p><strong>รายละเอียด:</strong> {product.description}</p>
+          </div>
+        )}
+      </div>
     </div>
   );
 };

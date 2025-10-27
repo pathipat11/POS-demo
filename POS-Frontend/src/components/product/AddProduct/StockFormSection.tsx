@@ -96,6 +96,7 @@ const StockFormSection: React.FC<Props> = ({
                             <option value="แพ็ค">แพ็ค</option>
                             <option value="ลัง">ลัง</option>
                             <option value="เซ็ต">เซ็ต</option>
+                            <option value="กระป๋อง">กระป๋อง</option>
                         </select>
 
                         {/* จำนวนต่อหน่วย */}

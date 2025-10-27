@@ -12,6 +12,9 @@ const StockLotPage: React.FC = () => {
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
 
+  /* =============================
+     📦 โหลดข้อมูลจาก backend
+  ============================== */
   useEffect(() => {
     const fetchAll = async () => {
       try {
@@ -27,7 +30,9 @@ const StockLotPage: React.FC = () => {
     fetchAll();
   }, []);
 
-  // ✅ ฟังก์ชันกรองข้อมูลสินค้า
+  /* =============================
+     🔍 กรอง + เรียงข้อมูลสินค้า
+  ============================== */
   const filteredProducts = useMemo(() => {
     if (!data?.stocks) return [];
 
@@ -52,12 +57,12 @@ const StockLotPage: React.FC = () => {
       const totalRemaining = remainingMap[pid] ?? 0;
       return {
         ...s,
-        totalRemaining, // 👈 จำนวนคงเหลือจาก lots จริง
+        totalRemaining,
       };
     });
 
     // ✅ ฟิลเตอร์จากชื่อหรือบาร์โค้ด
-    return merged.filter((p: any) => {
+    const filtered = merged.filter((p: any) => {
       const name = p.productId?.name || p.name || "";
       const barcode = p.productId?.barcode || p.barcode || "";
       return (
@@ -65,10 +70,20 @@ const StockLotPage: React.FC = () => {
         barcode.toLowerCase().includes(searchQuery.toLowerCase())
       );
     });
+
+    // ✅ เรียงใหม่ก่อนเก่าตามวันที่เติมสต็อก
+    filtered.sort((a: any, b: any) => {
+      const dateA = new Date(a.lastRestocked || a.updatedAt || a.createdAt || 0).getTime();
+      const dateB = new Date(b.lastRestocked || b.updatedAt || b.createdAt || 0).getTime();
+      return dateB - dateA; // 🔁 ใหม่ก่อน
+    });
+
+    return filtered;
   }, [data, searchQuery]);
 
-
-  // ✅ Pagination Logic
+  /* =============================
+     📄 Pagination
+  ============================== */
   const totalItems = filteredProducts.length;
   const totalPages = Math.ceil(totalItems / itemsPerPage);
   const paginatedProducts = filteredProducts.slice(
@@ -79,12 +94,17 @@ const StockLotPage: React.FC = () => {
   if (loading) return <p className="stocklot-loading">⏳ กำลังโหลดข้อมูล...</p>;
   if (!data) return <p className="stocklot-error">❌ โหลดข้อมูลไม่สำเร็จ</p>;
 
+  /* =============================
+     🧾 Render หน้าแสดงล็อตสินค้า
+  ============================== */
   return (
     <div className="display">
       <div className="stocklot-container">
         {/* ---------- HEADER ---------- */}
         <div className="stocklot-header-wrapper">
-            <h1 className="stocklot-header">📦 จัดการล็อตสินค้า (Stock Lot Management)</h1>
+          <h1 className="stocklot-header">
+            📦 จัดการล็อตสินค้า (Stock Lot Management)
+          </h1>
 
           {/* ---------- SEARCH & CONTROL BAR ---------- */}
           <div className="stocklot-controls">
@@ -126,8 +146,8 @@ const StockLotPage: React.FC = () => {
               ...data,
               stocks: paginatedProducts,
             }}
-            currentPage={currentPage}      // ✅ ส่งหน้า
-            itemsPerPage={itemsPerPage}    // ✅ ส่งจำนวนต่อหน้า
+            currentPage={currentPage}
+            itemsPerPage={itemsPerPage}
           />
         </div>
 
@@ -141,9 +161,11 @@ const StockLotPage: React.FC = () => {
             >
               ⬅ ก่อนหน้า
             </button>
+
             <span className="page-info">
               หน้า {currentPage} จาก {totalPages}
             </span>
+
             <button
               disabled={currentPage === totalPages}
               onClick={() => setCurrentPage((p) => p + 1)}
